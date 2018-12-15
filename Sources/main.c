@@ -20,6 +20,22 @@
 #define COL3 (1<<26)
 #define COL4 (1<<28)
 
+#define NOTE_G 2550
+#define NOTE_HALF_G 2411
+#define NOTE_DOWN_E 3219
+#define NOTE_DOWN_B 2150
+#define NOTE_D 3400
+#define NOTE_DOWN_G 2707
+#define NOTE_FS 2707
+#define NOTE_F 2864
+#define NOTE_E 3038
+#define NOTE_DS 3219
+#define NOTE_GS 2411
+#define NOTE_CS 3615
+#define NOTE_C 3830
+#define NOTE_B 2028
+#define NOTE_A 2272
+
 /*
  * ROW1 23 PTA8
  * ROW2 24 PTA10
@@ -29,6 +45,7 @@
  * COL2 36 PTA29
  * COL3 37 PTA26
  * COL4 38 PTA28
+ * SP 27 PTA7
 */
 unsigned int compare = 0x200;
 
@@ -64,6 +81,7 @@ void PortsInit(void)
     PORTE->PCR[11] = PORT_PCR_MUX(0x01); // SW6
 
     PORTA->PCR[8] = PORT_PCR_MUX(0x01); // SW6
+    PORTA->PCR[7] = PORT_PCR_MUX(0x01); // SW6
     PORTA->PCR[10] = PORT_PCR_MUX(0x01); // SW6
     PORTA->PCR[6] = PORT_PCR_MUX(0x01); // SW6
     PORTA->PCR[11] = PORT_PCR_MUX(0x01); // SW6
@@ -73,11 +91,51 @@ void PortsInit(void)
     PORTA->PCR[26] = PORT_PCR_MUX(0x01); // SW6
     PORTA->PCR[28] = PORT_PCR_MUX(0x01); // SW6
 
-    PTA->PDDR = GPIO_PDDR_PDD(0x3C000000);
+    PTA->PDDR = GPIO_PDDR_PDD(0x3C000080);
     /* Change corresponding PTB port pins as outputs */
     PTB->PDDR = GPIO_PDDR_PDD( 0x3C );
     PTB->PDOR |= GPIO_PDOR_PDO( 0x3C); // turn all LEDs OFF
 
+}
+
+void beep(int lenght) {
+int q;
+	for (q=0; q<150; q++) {
+    	PTA->PDOR = GPIO_PDOR_PDO(0x80);
+    	delay(lenght);
+    	PTA->PDOR = GPIO_PDOR_PDO(0x0);
+    	delay(lenght);
+    }
+}
+
+void playC(){
+	beep(3830);
+}
+
+void playD(){
+	beep(3400);
+}
+
+void playE(){
+	beep(3038);
+}
+
+void playF(){
+	beep(2864);
+}
+
+void playG(){
+	beep(2550);
+}
+void playA(){
+	beep(2272);
+}
+
+void playH(){
+	beep(2028);
+}
+void playC1(){
+	beep(1912);
 }
 
 void LPTMR0_IRQHandler(void)
@@ -155,15 +213,19 @@ int main(void)
     	delay(500);
     	if(((GPIOA_PDIR & (1<<8)) == 0) && !(PTA->PDOR & (1 << 29))){
     		compare = 0x40; //2
+    		playG();
         }
     	if(((GPIOA_PDIR & (1<<10)) == 0) && !(PTA->PDOR & (1 << 29))){
     	    compare = 0x40; //5
+    	    playA();
     	}
     	if(((GPIOA_PDIR & (1<<6)) == 0) && !(PTA->PDOR & (1 << 29))){
     		compare = 0x400;  // 8
+    		playH();
     	}
     	if(((GPIOA_PDIR & (1<<11)) == 0) && !(PTA->PDOR & (1 << 29))){
     	    compare = 0x400; // 0
+    	    playC1();
     	}
 
     	setCol2();
@@ -172,15 +234,19 @@ int main(void)
 
     	if(((GPIOA_PDIR & (1<<8)) == 0) && !(PTA->PDOR & (1 << 28))){
     		compare = 0x400; //3
+
     	}
     	if(((GPIOA_PDIR & (1<<10)) == 0) && !(PTA->PDOR & (1 << 28))){
     		compare = 0x40;
+
     	}
     	if(((GPIOA_PDIR & (1<<6)) == 0) && !(PTA->PDOR & (1 << 28))){
     		compare = 0x40;
+
     	}
     	if(((GPIOA_PDIR & (1<<11)) == 0) && !(PTA->PDOR & (1 << 28))){
     		compare = 0x400;
+
     	}
 
     	setCol3();
@@ -189,31 +255,79 @@ int main(void)
 
     	if(((GPIOA_PDIR & (1<<8)) == 0) && !(PTA->PDOR & (1 << 27))){
     		compare = 0x400; //3
+    		playC();
     	}
     	if(((GPIOA_PDIR & (1<<10)) == 0) && !(PTA->PDOR & (1 << 27))){
     		compare = 0x400;
+    		playD();
     	}
     	if(((GPIOA_PDIR & (1<<6)) == 0) && !(PTA->PDOR & (1 << 27))){
     		compare = 0x40;
+    		playE();
     	}
     	if(((GPIOA_PDIR & (1<<11)) == 0) && !(PTA->PDOR & (1 << 27))){
     		compare = 0x40;
+    		playF();
     	}
     	setCol4();
     	resetPort();
     	delay(500);
 
     	if(((GPIOA_PDIR & (1<<8)) == 0) && !(PTA->PDOR & (1 << 26))){
-    		compare = 0x40; //3
+    		int note[] = {NOTE_D,NOTE_G,NOTE_G,NOTE_G,NOTE_D,NOTE_D,NOTE_D,NOTE_B,NOTE_B,NOTE_G,NOTE_G,NOTE_G,NOTE_A,NOTE_A,NOTE_F,NOTE_F,NOTE_G,NOTE_D,
+    		    				NOTE_G,NOTE_G,NOTE_D,NOTE_D,NOTE_B,NOTE_B,NOTE_G,NOTE_G,NOTE_A,NOTE_A,NOTE_F,NOTE_F,NOTE_G,NOTE_C,NOTE_G,NOTE_F,NOTE_E,NOTE_E,NOTE_C,
+    							NOTE_G,NOTE_F,NOTE_E,NOTE_E,NOTE_E,NOTE_F,NOTE_F,NOTE_B,NOTE_B,NOTE_E,NOTE_A,NOTE_F,NOTE_B,NOTE_A,NOTE_F,NOTE_G
+
+    		    		    		    							, 0};
+    		    		    		    	    		int index = 0;
+    		    		    		    	    		while(note[index] != 0){
+    		    		    		    	    			beep(note[index]);
+    		    		    		    	    			delay(50000);
+    		    		    		    	    			index++;
+    		    		    		    	    		}1
     	}
     	if(((GPIOA_PDIR & (1<<10)) == 0) && !(PTA->PDOR & (1 << 26))){
     		compare = 0x400;
+    		int note[] = {NOTE_F,NOTE_B,NOTE_F,NOTE_B,NOTE_F,NOTE_C,NOTE_F,NOTE_F,NOTE_B,NOTE_F,NOTE_B,NOTE_F,NOTE_C,NOTE_F,NOTE_F,NOTE_F,NOTE_C,NOTE_F,NOTE_F,NOTE_F,
+    				NOTE_C,NOTE_F,NOTE_F,NOTE_C,NOTE_F,NOTE_F,NOTE_C,NOTE_F,NOTE_C,NOTE_F
+
+						, 0};
+    		int index = 0;
+    		while(note[index] != 0){
+    			beep(note[index]);
+    			delay(100000);
+    			index++;
+    		}
     	}
     	if(((GPIOA_PDIR & (1<<6)) == 0) && !(PTA->PDOR & (1 << 26))){
     		compare = 0x400;
+    		int note[] = {NOTE_G,NOTE_G,NOTE_E,NOTE_G,NOTE_G,NOTE_E, NOTE_G, NOTE_G,NOTE_A,NOTE_G, NOTE_G,NOTE_F,
+    				NOTE_F,NOTE_F,NOTE_D,NOTE_F,NOTE_F,NOTE_D,NOTE_F,NOTE_F,NOTE_G,NOTE_F,NOTE_F,NOTE_E
+
+    							, 0};
+    	    		int index = 0;
+    	    		while(note[index] != 0){
+    	    			beep(note[index]);
+    	    			delay(100000);
+    	    			index++;
+    	    		}
+
     	}
     	if(((GPIOA_PDIR & (1<<11)) == 0) && !(PTA->PDOR & (1 << 26))){
     		compare = 0x40;
+    		int note[] = {NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_G,NOTE_C,NOTE_D,
+    				NOTE_E,NOTE_F,NOTE_F,NOTE_F,NOTE_F,NOTE_F,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,
+					NOTE_D,NOTE_D,NOTE_E,NOTE_D,NOTE_G,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,NOTE_E,
+					NOTE_E,NOTE_G,NOTE_C,NOTE_D,NOTE_E,NOTE_F,NOTE_F,NOTE_F,NOTE_F,NOTE_F,NOTE_E,
+					NOTE_E,NOTE_E,NOTE_E,NOTE_G,NOTE_G,NOTE_F,NOTE_D,NOTE_C
+
+    		    							, 0};
+    		    	    		int index = 0;
+    		    	    		while(note[index] != 0){
+    		    	    			beep(note[index]);
+    		    	    			delay(50000);
+    		    	    			index++;
+    		    	    		}
     	}
 
         if (compare < 0x40) compare = 0x40;
